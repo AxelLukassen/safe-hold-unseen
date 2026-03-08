@@ -1,4 +1,5 @@
 import type { EncryptedVault, PasswordEntry } from "@/types/vault";
+import { computeChecksum } from "./checksumService";
 
 const PBKDF2_ITERATIONS = 600000;
 
@@ -51,11 +52,16 @@ export async function encryptEntries(
     plaintext
   );
 
+  const dataBase64 = bufferToBase64(ciphertext);
+  const checksumInput = `${bufferToBase64(salt.buffer)}:${bufferToBase64(iv.buffer)}:${dataBase64}`;
+  const checksum = await computeChecksum(checksumInput);
+
   return {
     version: 1,
     salt: bufferToBase64(salt.buffer),
     iv: bufferToBase64(iv.buffer),
-    data: bufferToBase64(ciphertext),
+    data: dataBase64,
+    checksum,
   };
 }
 
