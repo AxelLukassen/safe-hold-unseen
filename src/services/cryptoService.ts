@@ -1,4 +1,5 @@
 import type { EncryptedVault, PasswordEntry } from "@/types/vault";
+import { computeChecksum } from "./checksumService";
 
 const PBKDF2_ITERATIONS = 600000;
 
