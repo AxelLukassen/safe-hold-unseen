@@ -14,6 +14,14 @@ export interface EncryptedVault {
   salt: string;
   iv: string;
   data: string;
+  checksum: string;
+}
+
+export interface PlaintextVaultWithChecksum {
+  version: 1;
+  format: "plaintext";
+  entries: PasswordEntry[];
+  checksum: string;
 }
 
 export interface PlaintextVault {
