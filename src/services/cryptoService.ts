@@ -51,11 +51,16 @@ export async function encryptEntries(
     plaintext
   );
 
+  const dataBase64 = bufferToBase64(ciphertext);
+  const checksumInput = `${bufferToBase64(salt.buffer)}:${bufferToBase64(iv.buffer)}:${dataBase64}`;
+  const checksum = await computeChecksum(checksumInput);
+
   return {
     version: 1,
     salt: bufferToBase64(salt.buffer),
     iv: bufferToBase64(iv.buffer),
-    data: bufferToBase64(ciphertext),
+    data: dataBase64,
+    checksum,
   };
 }
 
