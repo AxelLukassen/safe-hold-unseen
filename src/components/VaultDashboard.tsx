@@ -20,7 +20,7 @@ import {
 import type { PasswordEntry } from "@/types/vault";
 
 export function VaultDashboard() {
-  const { state, lock, setEntries, addEntry, getMasterPassword } = useVault();
+  const { state, lock, setEntries, addEntry, updateEntry, getMasterPassword } = useVault();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
@@ -73,7 +73,6 @@ export function VaultDashboard() {
 
   const handleSaveEntry = (entry: PasswordEntry) => {
     if (editingEntry) {
-      const { updateEntry } = useVaultDirect();
       updateEntry({ ...entry, updatedAt: Date.now() });
     } else {
       addEntry(entry);
@@ -84,7 +83,6 @@ export function VaultDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-foreground">SecureVault</h1>
@@ -95,7 +93,6 @@ export function VaultDashboard() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
-        {/* Search & Actions */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -142,7 +139,6 @@ export function VaultDashboard() {
           className="hidden"
         />
 
-        {/* Entry List */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Lock className="h-12 w-12 mb-4 opacity-30" />
@@ -165,7 +161,6 @@ export function VaultDashboard() {
         )}
       </main>
 
-      {/* Dialogs */}
       {showForm && (
         <PasswordEntryForm
           entry={editingEntry}
@@ -200,10 +195,4 @@ export function VaultDashboard() {
       </AlertDialog>
     </div>
   );
-}
-
-// Helper to access updateEntry without hooks rules violation
-function useVaultDirect() {
-  // This is a workaround - we'll fix this properly
-  return { updateEntry: (_entry: PasswordEntry) => {} };
 }
