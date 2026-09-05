@@ -65,7 +65,7 @@ export async function importFile(
         throw new Error("Prüfsumme ungültig – die Datei wurde möglicherweise beschädigt oder manipuliert.");
       }
     }
-    return plaintext.entries;
+    return validateImportedEntries(plaintext.entries);
   }
 
   // Verschlüsselter Import: nur Salt, IV und Datenblob sind außen lesbar.

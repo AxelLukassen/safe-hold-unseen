@@ -1,6 +1,7 @@
 import type { Argon2idParams, EncryptedVaultFile, PasswordEntry, VaultPayload } from "@/types/vault";
 import { CURRENT_VAULT_VERSION } from "@/types/vault";
 import { computeChecksum, verifyChecksum } from "./checksumService";
+import { validateImportedEntries } from "./entryValidation";
 import { ARGON2ID_PARAMS, deriveVaultKey } from "./kdf/keyDerivation";
 
 const ALGORITHM = "AES-256-GCM" as const;
@@ -119,7 +120,7 @@ export async function decryptVault(
     throw new Error("Prüfsumme ungültig – die Datei wurde möglicherweise beschädigt oder manipuliert.");
   }
 
-  return payload.entries;
+  return validateImportedEntries(payload.entries);
 }
 
 export function clearSensitiveString(str: string): void {
