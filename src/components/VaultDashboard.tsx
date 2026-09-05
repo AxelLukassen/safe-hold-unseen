@@ -6,7 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
-import { PasswordEntryCard } from "@/components/PasswordEntryCard";
+import { EntryTable } from "@/components/EntryTable";
 import { PasswordEntryForm } from "@/components/PasswordEntryForm";
 import { LockWarningDialog } from "@/components/LockWarningDialog";
 import { useAutoLockSave } from "@/hooks/useAutoLockSave";
@@ -19,10 +19,11 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { collectGroupNames } from "@/services/entryGrouping";
 import type { PasswordEntry } from "@/types/vault";
 
 export function VaultDashboard() {
-  const { state, lock, setEntries, addEntry, updateEntry, markSaved, getMasterPassword } = useVault();
+  const { state, lock, setEntries, addEntry, updateEntry, deleteEntry, markSaved, getMasterPassword } = useVault();
   const autoLock = useAutoLockSave();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -35,8 +36,11 @@ export function VaultDashboard() {
     (e) =>
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.username.toLowerCase().includes(search.toLowerCase()) ||
-      e.url.toLowerCase().includes(search.toLowerCase())
+      e.url.toLowerCase().includes(search.toLowerCase()) ||
+      e.group.toLowerCase().includes(search.toLowerCase())
   );
+
+  const existingGroups = collectGroupNames(state.entries);
 
   const getErrorMessage = (error: unknown, fallback: string): string =>
     error instanceof Error ? error.message : fallback;
@@ -186,21 +190,18 @@ export function VaultDashboard() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((entry) => (
-              <PasswordEntryCard
-                key={entry.id}
-                entry={entry}
-                onEdit={() => { setEditingEntry(entry); setShowForm(true); }}
-              />
-            ))}
-          </div>
+          <EntryTable
+            entries={filtered}
+            onEditEntry={(entry) => { setEditingEntry(entry); setShowForm(true); }}
+            onDeleteEntry={deleteEntry}
+          />
         )}
       </main>
 
       {showForm && (
         <PasswordEntryForm
           entry={editingEntry}
+          existingGroups={existingGroups}
           onSave={handleSaveEntry}
           onClose={() => { setShowForm(false); setEditingEntry(null); }}
         />
