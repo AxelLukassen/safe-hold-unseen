@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import {
-  Plus, Download, Upload, Lock, Search, FileDown, FileText, AlertTriangle,
+  Plus, Download, Upload, Lock, Search, FileDown, FileText, AlertTriangle, Loader2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
