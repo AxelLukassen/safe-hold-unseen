@@ -199,7 +199,7 @@ export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Abbrechen</Button>
-          <Button onClick={handleSave} disabled={!form.title || !form.password}>Speichern</Button>
+          <Button onClick={handleSave} disabled={!form.title.trim() || !form.password}>Speichern</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
