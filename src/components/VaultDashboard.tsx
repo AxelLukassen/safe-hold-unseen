@@ -132,15 +132,26 @@ export function VaultDashboard() {
             <Button size="sm" onClick={() => { setEditingEntry(null); setShowForm(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Neu
             </Button>
-            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isBusy}
+              title="Importieren"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <Upload className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4" />
+                <Button size="sm" variant="outline" disabled={isBusy} title="Exportieren">
+                  {isBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleExportEncrypted}>
                   <FileDown className="h-4 w-4 mr-2" /> Verschlüsselt
