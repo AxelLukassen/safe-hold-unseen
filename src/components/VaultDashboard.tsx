@@ -105,9 +105,6 @@ export function VaultDashboard() {
             <Button size="sm" onClick={() => { setEditingEntry(null); setShowForm(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Neu
             </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowGenerator(true)}>
-              Erzeugen
-            </Button>
             <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
               <Upload className="h-4 w-4" />
             </Button>
