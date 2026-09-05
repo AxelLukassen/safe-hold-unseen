@@ -172,9 +172,14 @@ export function VaultDashboard() {
               Klartext-Export
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Alle Passwörter werden unverschlüsselt gespeichert. Diese Datei sollte nur
-              für Backups verwendet und sicher aufbewahrt werden.
+              Achtung: Diese Datei enthält alle Passwörter vollständig lesbar – ohne
+              Verschlüsselung und ohne Schutz durch dein Masterpasswort. Wer die Datei in
+              die Hände bekommt, hat sofort Zugriff auf alle Zugänge. Nutze sie nur kurzzeitig
+              (z. B. zum Wechsel zu einem anderen Programm), speichere sie nicht in Cloud-Ordnern
+              und lösche sie danach sicher. Für Backups ist der verschlüsselte Export die
+              richtige Wahl.
             </AlertDialogDescription>
+
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>

@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Shield, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
+import { evaluateStrength } from "@/services/passwordGenerator";
+
+const MIN_MASTER_PASSWORD_LENGTH = 12;
+const MAX_STRENGTH_SCORE = 6;
 
 export function MasterPasswordScreen() {
   const [password, setPassword] = useState("");
@@ -10,9 +14,14 @@ export function MasterPasswordScreen() {
   const [error, setError] = useState("");
   const { unlock } = useVault();
 
+  const strength = useMemo(() => evaluateStrength(password), [password]);
+  const strengthPercent = Math.round((strength.score / MAX_STRENGTH_SCORE) * 100);
+
   const handleUnlock = () => {
-    if (password.length < 1) {
-      setError("Bitte Masterpasswort eingeben");
+    if (password.length < MIN_MASTER_PASSWORD_LENGTH) {
+      setError(
+        `Das Masterpasswort muss mindestens ${MIN_MASTER_PASSWORD_LENGTH} Zeichen lang sein.`
+      );
       return;
     }
     unlock(password);
@@ -45,6 +54,7 @@ export function MasterPasswordScreen() {
               type={showPassword ? "text" : "password"}
               placeholder="Masterpasswort"
               value={password}
+              maxLength={255}
               onChange={(e) => {
                 setPassword(e.target.value);
                 setError("");
@@ -62,6 +72,20 @@ export function MasterPasswordScreen() {
             </button>
           </div>
 
+          {password.length > 0 && (
+            <div className="space-y-1 text-left">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${strengthPercent}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Stärke: {strength.label}
+              </p>
+            </div>
+          )}
+
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button onClick={handleUnlock} className="w-full">
@@ -70,7 +94,9 @@ export function MasterPasswordScreen() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Alle Daten bleiben lokal auf deinem Gerät. Kein Server, keine Cloud.
+          Nimm eine lange, einmalige Passphrase (mindestens {MIN_MASTER_PASSWORD_LENGTH}{" "}
+          Zeichen), die du nirgends sonst verwendest. Alle Daten bleiben lokal auf deinem
+          Gerät – kein Server, keine Cloud.
         </p>
       </div>
     </div>
