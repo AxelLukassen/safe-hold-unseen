@@ -230,6 +230,38 @@ export function VaultDashboard() {
         onLockNow={autoLock.handleLockNow}
       />
 
+      <AlertDialog
+        open={deletingEntry !== null}
+        onOpenChange={(open) => { if (!open) setDeletingEntry(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Eintrag löschen?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Eintrag{" "}
+              <span className="font-semibold text-foreground">
+                {deletingEntry?.title}
+              </span>{" "}
+              wird endgültig aus dem Tresor entfernt. Diese Aktion kann nicht
+              rückgängig gemacht werden – nur eine zuvor exportierte Datei kann
+              ihn wiederherstellen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={showPlaintextWarning} onOpenChange={setShowPlaintextWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
