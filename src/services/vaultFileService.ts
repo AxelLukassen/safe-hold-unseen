@@ -45,8 +45,16 @@ export async function importFile(
         throw new Error("Prüfsumme ungültig – die Datei wurde möglicherweise beschädigt oder manipuliert.");
       }
     }
-    return decryptVault(parsed as EncryptedVault, masterPassword);
+    const vault: EncryptedVault = { ...parsed, version: parsed.version === 2 ? 2 : 1 };
+    try {
+      return await decryptVault(vault, masterPassword);
+    } catch {
+      throw new Error(
+        "Entschlüsselung fehlgeschlagen – falsches Masterpasswort oder die Datei wurde verändert."
+      );
+    }
   }
+
 
   throw new Error("Unbekanntes Dateiformat");
 }
