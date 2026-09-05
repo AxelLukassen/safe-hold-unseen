@@ -1,4 +1,6 @@
 import type { PasswordEntry, EncryptedVault, PlaintextVault } from "@/types/vault";
+import { CURRENT_VAULT_VERSION } from "@/types/vault";
+
 import { encryptEntries, decryptVault } from "./cryptoService";
 import { computeChecksum, verifyChecksum } from "./checksumService";
 
