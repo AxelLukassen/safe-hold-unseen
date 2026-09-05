@@ -28,6 +28,7 @@ export function VaultDashboard() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<PasswordEntry | null>(null);
   const [showPlaintextWarning, setShowPlaintextWarning] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
