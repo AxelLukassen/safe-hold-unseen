@@ -42,11 +42,18 @@ export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
   const strength = evaluateStrength(form.password);
 
   const handleSave = () => {
-    if (!form.title || !form.password) return;
+    const cleaned = {
+      title: form.title.trim(),
+      username: form.username.trim(),
+      password: form.password,
+      url: form.url.trim(),
+      notes: form.notes.trim(),
+    };
+    if (!cleaned.title || !cleaned.password) return;
     const now = Date.now();
     onSave({
       id: entry?.id ?? crypto.randomUUID(),
-      ...form,
+      ...cleaned,
       createdAt: entry?.createdAt ?? now,
       updatedAt: now,
     });

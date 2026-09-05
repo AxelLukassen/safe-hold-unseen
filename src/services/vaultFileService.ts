@@ -2,6 +2,7 @@ import type { PasswordEntry, EncryptedVaultFile, PlaintextVault } from "@/types/
 
 import { encryptEntries, decryptVault } from "./cryptoService";
 import { computeChecksum, verifyChecksum } from "./checksumService";
+import { validateImportedEntries } from "./entryValidation";
 
 const UNSUPPORTED_FORMAT_MESSAGE =
   "Diese Datei stammt aus einer älteren Version und wird nicht mehr unterstützt. Bitte den Tresor mit der aktuellen Version neu exportieren.";
