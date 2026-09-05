@@ -94,7 +94,7 @@ export async function importFile(
   throw new Error("Unbekanntes Dateiformat");
 }
 
-function downloadJSON(data: unknown, filename: string): void {
+export function downloadJSON(data: unknown, filename: string): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",
   });

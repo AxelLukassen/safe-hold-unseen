@@ -15,6 +15,7 @@ interface VaultContextValue {
   lock: () => void;
   extendSession: () => void;
   markSaved: () => void;
+  replaceMasterPassword: (newPassword: string) => void;
   setEntries: (entries: PasswordEntry[]) => void;
   addEntry: (entry: PasswordEntry) => void;
   updateEntry: (entry: PasswordEntry) => void;
@@ -82,6 +83,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   const markSaved = useCallback(() => {
     setState((prev) => ({ ...prev, hasUnsavedChanges: false }));
+  }, []);
+
+  const replaceMasterPassword = useCallback((newPassword: string) => {
+    setState((prev) => ({ ...prev, masterPassword: newPassword, hasUnsavedChanges: false }));
   }, []);
 
   useEffect(() => {
@@ -154,6 +159,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         lock,
         extendSession,
         markSaved,
+        replaceMasterPassword,
         setEntries,
         addEntry,
         updateEntry,
