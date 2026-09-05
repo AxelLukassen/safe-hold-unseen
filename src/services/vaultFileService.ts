@@ -1,4 +1,6 @@
 import type { PasswordEntry, EncryptedVault, PlaintextVault } from "@/types/vault";
+import { CURRENT_VAULT_VERSION } from "@/types/vault";
+
 import { encryptEntries, decryptVault } from "./cryptoService";
 import { computeChecksum, verifyChecksum } from "./checksumService";
 
@@ -38,6 +40,12 @@ export async function importFile(
 
   // Verschlüsselter Import mit Prüfsumme
   if (parsed.salt && parsed.iv && parsed.data) {
+    if (parsed.version !== CURRENT_VAULT_VERSION || parsed.kdf !== "argon2id") {
+      throw new Error(
+        "Diese Datei stammt aus einer älteren Version und wird nicht mehr unterstützt. Bitte den Tresor mit der aktuellen Version neu exportieren."
+      );
+    }
+
     if (parsed.checksum) {
       const checksumInput = `${parsed.salt}:${parsed.iv}:${parsed.data}`;
       const valid = await verifyChecksum(checksumInput, parsed.checksum);
@@ -45,15 +53,16 @@ export async function importFile(
         throw new Error("Prüfsumme ungültig – die Datei wurde möglicherweise beschädigt oder manipuliert.");
       }
     }
-    const vault: EncryptedVault = { ...parsed, version: parsed.version === 2 ? 2 : 1 };
+
     try {
-      return await decryptVault(vault, masterPassword);
+      return await decryptVault(parsed as EncryptedVault, masterPassword);
     } catch {
       throw new Error(
         "Entschlüsselung fehlgeschlagen – falsches Masterpasswort oder die Datei wurde verändert."
       );
     }
   }
+
 
 
   throw new Error("Unbekanntes Dateiformat");

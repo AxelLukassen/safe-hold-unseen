@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import {
-  Plus, Download, Upload, Lock, Search, FileDown, FileText, AlertTriangle,
+  Plus, Download, Upload, Lock, Search, FileDown, FileText, AlertTriangle, Loader2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
@@ -24,6 +25,7 @@ export function VaultDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
   const [showPlaintextWarning, setShowPlaintextWarning] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = state.entries.filter(
@@ -33,25 +35,42 @@ export function VaultDashboard() {
       e.url.toLowerCase().includes(search.toLowerCase())
   );
 
+  const getErrorMessage = (error: unknown, fallback: string): string =>
+    error instanceof Error ? error.message : fallback;
+
   const handleExportEncrypted = async () => {
     const mp = getMasterPassword();
     if (!mp) return;
+    setIsBusy(true);
     try {
       await exportEncrypted(state.entries, mp);
       toast({ title: "Exportiert", description: "Verschlüsselte Datei heruntergeladen." });
-    } catch {
-      toast({ title: "Fehler", description: "Export fehlgeschlagen.", variant: "destructive" });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: getErrorMessage(error, "Export fehlgeschlagen."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsBusy(false);
     }
   };
 
   const handleExportPlaintext = async () => {
+    setShowPlaintextWarning(false);
+    setIsBusy(true);
     try {
       await exportPlaintext(state.entries);
       toast({ title: "Exportiert", description: "Klartext-Datei heruntergeladen." });
-    } catch {
-      toast({ title: "Fehler", description: "Export fehlgeschlagen.", variant: "destructive" });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: getErrorMessage(error, "Export fehlgeschlagen."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsBusy(false);
     }
-    setShowPlaintextWarning(false);
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,15 +78,23 @@ export function VaultDashboard() {
     if (!file) return;
     const mp = getMasterPassword();
     if (!mp) return;
+    setIsBusy(true);
     try {
       const entries = await importFile(file, mp);
       setEntries(entries);
       toast({ title: "Importiert", description: `${entries.length} Einträge geladen.` });
-    } catch {
-      toast({ title: "Fehler", description: "Import fehlgeschlagen. Falsches Passwort oder ungültige Datei.", variant: "destructive" });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: getErrorMessage(error, "Import fehlgeschlagen. Ungültige Datei."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
 
   const handleSaveEntry = (entry: PasswordEntry) => {
     if (editingEntry) {
@@ -105,15 +132,26 @@ export function VaultDashboard() {
             <Button size="sm" onClick={() => { setEditingEntry(null); setShowForm(true); }}>
               <Plus className="h-4 w-4 mr-1" /> Neu
             </Button>
-            <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isBusy}
+              title="Importieren"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <Upload className="h-4 w-4" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline">
-                  <Download className="h-4 w-4" />
+                <Button size="sm" variant="outline" disabled={isBusy} title="Exportieren">
+                  {isBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleExportEncrypted}>
                   <FileDown className="h-4 w-4 mr-2" /> Verschlüsselt
