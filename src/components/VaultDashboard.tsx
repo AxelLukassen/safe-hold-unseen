@@ -164,10 +164,6 @@ export function VaultDashboard() {
         />
       )}
 
-      {showGenerator && (
-        <PasswordGenerator onClose={() => setShowGenerator(false)} />
-      )}
-
       <AlertDialog open={showPlaintextWarning} onOpenChange={setShowPlaintextWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
