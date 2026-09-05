@@ -18,10 +18,10 @@ export function PasswordEntryCard({ entry, onEdit }: Props) {
   const copyToClipboard = async (text: string, label: string) => {
     await navigator.clipboard.writeText(text);
     toast({ title: "Kopiert", description: `${label} in die Zwischenablage kopiert.` });
-    // Auto-clear clipboard after 10 seconds
+    // Auto-clear clipboard after 1 minute
     setTimeout(() => {
       navigator.clipboard.writeText("").catch(() => {});
-    }, 10000);
+    }, 60000);
   };
 
   const handleShowPassword = () => {
