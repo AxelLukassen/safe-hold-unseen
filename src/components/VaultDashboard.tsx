@@ -205,7 +205,7 @@ export function VaultDashboard() {
           <EntryTable
             entries={filtered}
             onEditEntry={(entry) => { setEditingEntry(entry); setShowForm(true); }}
-            onDeleteEntry={deleteEntry}
+            onDeleteEntry={handleRequestDelete}
           />
         )}
       </main>
