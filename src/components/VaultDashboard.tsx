@@ -28,6 +28,7 @@ export function VaultDashboard() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
+  const [deletingEntry, setDeletingEntry] = useState<PasswordEntry | null>(null);
   const [showPlaintextWarning, setShowPlaintextWarning] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +115,17 @@ export function VaultDashboard() {
     setEditingEntry(null);
   };
 
+  const handleRequestDelete = (id: string) => {
+    const entry = state.entries.find((item) => item.id === id);
+    if (entry) setDeletingEntry(entry);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deletingEntry) return;
+    deleteEntry(deletingEntry.id);
+    setDeletingEntry(null);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
@@ -193,7 +205,7 @@ export function VaultDashboard() {
           <EntryTable
             entries={filtered}
             onEditEntry={(entry) => { setEditingEntry(entry); setShowForm(true); }}
-            onDeleteEntry={deleteEntry}
+            onDeleteEntry={handleRequestDelete}
           />
         )}
       </main>
@@ -217,6 +229,38 @@ export function VaultDashboard() {
         onStayUnlocked={autoLock.handleStayUnlocked}
         onLockNow={autoLock.handleLockNow}
       />
+
+      <AlertDialog
+        open={deletingEntry !== null}
+        onOpenChange={(open) => { if (!open) setDeletingEntry(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Eintrag löschen?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Eintrag{" "}
+              <span className="font-semibold text-foreground">
+                {deletingEntry?.title}
+              </span>{" "}
+              wird endgültig aus dem Tresor entfernt. Diese Aktion kann nicht
+              rückgängig gemacht werden – nur eine zuvor exportierte Datei kann
+              ihn wiederherstellen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showPlaintextWarning} onOpenChange={setShowPlaintextWarning}>
         <AlertDialogContent>
