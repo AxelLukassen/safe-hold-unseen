@@ -1,6 +1,6 @@
-import type { Argon2idParams, EncryptedVault, PasswordEntry } from "@/types/vault";
+import type { Argon2idParams, EncryptedVaultFile, PasswordEntry, VaultPayload } from "@/types/vault";
 import { CURRENT_VAULT_VERSION } from "@/types/vault";
-import { computeChecksum } from "./checksumService";
+import { computeChecksum, verifyChecksum } from "./checksumService";
 import { ARGON2ID_PARAMS, deriveVaultKey } from "./kdf/keyDerivation";
 
 const ALGORITHM = "AES-256-GCM" as const;
@@ -23,36 +23,18 @@ function base64ToBuffer(base64: string): ArrayBuffer {
 }
 
 /**
- * Kanonische Serialisierung der Metadaten. Diese Bytes werden als
- * "associated data" mitauthentifiziert, damit Version, Verfahren und
- * KDF-Parameter nicht unbemerkt verändert werden können.
+ * Salt und IV werden als "associated data" mitauthentifiziert, damit sie
+ * nicht unbemerkt ausgetauscht werden können. Alle übrigen Metadaten
+ * liegen bereits im verschlüsselten Paket und brauchen das nicht.
  */
-function buildAssociatedData(vault: {
-  version: number;
-  algorithm: string;
-  kdf: string;
-  kdfParams: Argon2idParams;
-  salt: string;
-  iv: string;
-}): Uint8Array {
-  const canonical = JSON.stringify([
-    vault.version,
-    vault.algorithm,
-    vault.kdf,
-    vault.kdfParams.memorySizeKiB,
-    vault.kdfParams.iterations,
-    vault.kdfParams.parallelism,
-    vault.kdfParams.hashLength,
-    vault.salt,
-    vault.iv,
-  ]);
-  return new TextEncoder().encode(canonical);
+function buildAssociatedData(saltBase64: string, ivBase64: string): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify([saltBase64, ivBase64]));
 }
 
 export async function encryptEntries(
   entries: PasswordEntry[],
   masterPassword: string
-): Promise<EncryptedVault> {
+): Promise<EncryptedVaultFile> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES));
   const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
   const key = await deriveVaultKey(masterPassword, salt, ARGON2ID_PARAMS);
@@ -60,73 +42,84 @@ export async function encryptEntries(
   const saltBase64 = bufferToBase64(salt.buffer);
   const ivBase64 = bufferToBase64(iv.buffer);
 
-  const additionalData = buildAssociatedData({
+  const entriesJson = JSON.stringify(entries);
+  const payload: VaultPayload = {
     version: CURRENT_VAULT_VERSION,
     algorithm: ALGORITHM,
     kdf: KDF_NAME,
     kdfParams: ARGON2ID_PARAMS,
-    salt: saltBase64,
-    iv: ivBase64,
-  });
+    checksum: await computeChecksum(entriesJson),
+    entries,
+  };
 
-  const plaintext = new TextEncoder().encode(JSON.stringify(entries));
+  const plaintext = new TextEncoder().encode(JSON.stringify(payload));
 
   const ciphertext = await crypto.subtle.encrypt(
     {
       name: "AES-GCM",
       iv: iv as BufferSource,
-      additionalData: additionalData as BufferSource,
+      additionalData: buildAssociatedData(saltBase64, ivBase64) as BufferSource,
       tagLength: AES_TAG_LENGTH_BITS,
     },
     key,
     plaintext
   );
 
-  const dataBase64 = bufferToBase64(ciphertext);
-  const checksum = await computeChecksum(`${saltBase64}:${ivBase64}:${dataBase64}`);
-
   return {
-    version: CURRENT_VAULT_VERSION,
-    algorithm: ALGORITHM,
-    kdf: KDF_NAME,
-    kdfParams: ARGON2ID_PARAMS,
-    salt: saltBase64,
-    iv: ivBase64,
-    data: dataBase64,
-    checksum,
+    s: saltBase64,
+    i: ivBase64,
+    d: bufferToBase64(ciphertext),
   };
 }
 
+function isValidKdfParams(params: Argon2idParams): boolean {
+  return (
+    Number.isInteger(params.memorySizeKiB) && params.memorySizeKiB >= 8192 &&
+    Number.isInteger(params.iterations) && params.iterations >= 1 &&
+    Number.isInteger(params.parallelism) && params.parallelism >= 1 &&
+    params.hashLength === 32
+  );
+}
+
 export async function decryptVault(
-  vault: EncryptedVault,
+  file: EncryptedVaultFile,
   masterPassword: string
 ): Promise<PasswordEntry[]> {
-  const salt = new Uint8Array(base64ToBuffer(vault.salt));
-  const iv = new Uint8Array(base64ToBuffer(vault.iv));
-  const data = base64ToBuffer(vault.data);
-  const key = await deriveVaultKey(masterPassword, salt, vault.kdfParams);
-
-  const additionalData = buildAssociatedData({
-    version: vault.version,
-    algorithm: vault.algorithm,
-    kdf: vault.kdf,
-    kdfParams: vault.kdfParams,
-    salt: vault.salt,
-    iv: vault.iv,
-  });
+  const salt = new Uint8Array(base64ToBuffer(file.s));
+  const iv = new Uint8Array(base64ToBuffer(file.i));
+  const data = base64ToBuffer(file.d);
+  const key = await deriveVaultKey(masterPassword, salt, ARGON2ID_PARAMS);
 
   const decrypted = await crypto.subtle.decrypt(
     {
       name: "AES-GCM",
       iv: iv as BufferSource,
-      additionalData: additionalData as BufferSource,
+      additionalData: buildAssociatedData(file.s, file.i) as BufferSource,
       tagLength: AES_TAG_LENGTH_BITS,
     },
     key,
     data
   );
 
-  return JSON.parse(new TextDecoder().decode(decrypted)) as PasswordEntry[];
+  const payload = JSON.parse(new TextDecoder().decode(decrypted)) as VaultPayload;
+
+  if (
+    payload.version !== CURRENT_VAULT_VERSION ||
+    payload.algorithm !== ALGORITHM ||
+    payload.kdf !== KDF_NAME ||
+    !isValidKdfParams(payload.kdfParams) ||
+    !Array.isArray(payload.entries)
+  ) {
+    throw new Error("Ungültiger Tresor-Inhalt");
+  }
+
+  const entriesJson = JSON.stringify(payload.entries);
+  const checksumValid = await verifyChecksum(entriesJson, payload.checksum);
+  if (!checksumValid) {
+    throw new Error("Prüfsumme ungültig – die Datei wurde möglicherweise beschädigt oder manipuliert.");
+  }
+
+  return payload.entries;
 }
 
 export function clearSensitiveString(str: string): void {
