@@ -123,8 +123,3 @@ export async function decryptVault(
   return validateImportedEntries(payload.entries);
 }
 
-export function clearSensitiveString(str: string): void {
-  // In JS we can't truly zero memory, but we can dereference
-  // and encourage GC by overwriting references
-  void str;
-}
