@@ -16,6 +16,7 @@ import { ENTRY_FIELD_LIMITS } from "@/types/vault";
 
 interface Props {
   entry: PasswordEntry | null;
+  existingGroups: string[];
   onSave: (entry: PasswordEntry) => void;
   onClose: () => void;
 }
@@ -28,13 +29,14 @@ const DEFAULT_OPTIONS: PasswordGeneratorOptions = {
   symbols: true,
 };
 
-export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
+export function PasswordEntryForm({ entry, existingGroups, onSave, onClose }: Props) {
   const [form, setForm] = useState({
     title: entry?.title ?? "",
     username: entry?.username ?? "",
     password: entry?.password ?? "",
     url: entry?.url ?? "",
     notes: entry?.notes ?? "",
+    group: entry?.group ?? "",
   });
 
   const [showGenerator, setShowGenerator] = useState(false);
@@ -49,6 +51,7 @@ export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
       password: form.password,
       url: form.url.trim(),
       notes: form.notes.trim(),
+      group: form.group.trim(),
     };
     if (!cleaned.title || !cleaned.password) return;
     const now = Date.now();
@@ -190,6 +193,22 @@ export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
           <div className="space-y-2">
             <Label htmlFor="url">URL</Label>
             <Input id="url" value={form.url} maxLength={ENTRY_FIELD_LIMITS.url} onChange={(e) => update("url", e.target.value)} placeholder="https://..." />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="group">Gruppe</Label>
+            <Input
+              id="group"
+              list="entry-group-options"
+              value={form.group}
+              maxLength={ENTRY_FIELD_LIMITS.group}
+              onChange={(e) => update("group", e.target.value)}
+              placeholder="z.B. Arbeit (leer = Ohne Gruppe)"
+            />
+            <datalist id="entry-group-options">
+              {existingGroups.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notizen</Label>

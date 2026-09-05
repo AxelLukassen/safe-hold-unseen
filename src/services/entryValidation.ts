@@ -23,8 +23,17 @@ function isValidTimestamp(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 
+function isValidOptionalGroup(candidate: Record<string, unknown>): boolean {
+  const value = candidate.group;
+  if (value === undefined) return true;
+  return typeof value === "string" && value.length <= ENTRY_FIELD_LIMITS.group;
+}
+
 function sanitizeEntry(candidate: Record<string, unknown>): PasswordEntry | null {
   if (!STRING_FIELDS.every((field) => isValidStringField(candidate, field))) {
+    return null;
+  }
+  if (!isValidOptionalGroup(candidate)) {
     return null;
   }
   if (!isValidTimestamp(candidate.createdAt) || !isValidTimestamp(candidate.updatedAt)) {
@@ -40,6 +49,7 @@ function sanitizeEntry(candidate: Record<string, unknown>): PasswordEntry | null
     password: candidate.password as string,
     url: candidate.url as string,
     notes: candidate.notes as string,
+    group: typeof candidate.group === "string" ? candidate.group : "",
     createdAt: candidate.createdAt,
     updatedAt: candidate.updatedAt,
   };
