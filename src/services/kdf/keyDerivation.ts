@@ -30,11 +30,12 @@ function getWorker(): Worker {
     if (!resolver) return;
     pending.delete(message.requestId);
 
-    if (message.ok) {
+    if (message.ok === true) {
       resolver.resolve(message.key);
-      return;
+    } else {
+      resolver.reject(new Error(message.error));
     }
-    resolver.reject(new Error(message.error));
+
   };
 
   worker.onerror = () => {
