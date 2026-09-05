@@ -1,11 +1,16 @@
 import type { PasswordGeneratorOptions } from "@/types/vault";
 
+export const PASSWORD_LENGTH_MIN = 8;
+export const PASSWORD_LENGTH_MAX = 64;
+export const STRENGTH_MAX_SCORE = 6;
+
 const CHARS = {
   uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   lowercase: "abcdefghijklmnopqrstuvwxyz",
   numbers: "0123456789",
   symbols: "!@#$%^&*()_+-=[]{}|;:,.<>?",
 };
+
 
 export function generatePassword(options: PasswordGeneratorOptions): string {
   let charset = "";
