@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Lock } from "lucide-react";
+import { KeyRound, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useVault } from "@/context/VaultContext";
@@ -9,6 +9,7 @@ import { PasswordEntryForm } from "@/components/PasswordEntryForm";
 import { LockWarningDialog } from "@/components/LockWarningDialog";
 import { DeleteEntryDialog } from "@/components/DeleteEntryDialog";
 import { PlaintextExportDialog } from "@/components/PlaintextExportDialog";
+import { ChangeMasterPasswordDialog } from "@/components/ChangeMasterPasswordDialog";
 import { useAutoLockSave } from "@/hooks/useAutoLockSave";
 import { useVaultFileActions } from "@/hooks/useVaultFileActions";
 import { collectGroupNames } from "@/services/entryGrouping";
@@ -25,6 +26,7 @@ export function VaultDashboard() {
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<PasswordEntry | null>(null);
   const [isPlaintextWarningOpen, setIsPlaintextWarningOpen] = useState(false);
+  const [isPasswordChangeOpen, setIsPasswordChangeOpen] = useState(false);
 
   const filteredEntries = useMemo(
     () => filterEntries(state.entries, search),
@@ -67,9 +69,19 @@ export function VaultDashboard() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
           <h1 className="text-lg font-bold text-foreground">SecureVault</h1>
-          <Button variant="ghost" size="icon" onClick={lock} title="Sperren">
-            <Lock className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsPasswordChangeOpen(true)}
+              title="Masterpasswort ändern"
+            >
+              <KeyRound className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={lock} title="Sperren">
+              <Lock className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -138,6 +150,11 @@ export function VaultDashboard() {
         isOpen={isPlaintextWarningOpen}
         onOpenChange={setIsPlaintextWarningOpen}
         onConfirm={handleConfirmPlaintextExport}
+      />
+
+      <ChangeMasterPasswordDialog
+        isOpen={isPasswordChangeOpen}
+        onOpenChange={setIsPasswordChangeOpen}
       />
     </div>
   );

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
 import { evaluateStrength } from "@/services/passwordGenerator";
+import { MIN_MASTER_PASSWORD_LENGTH } from "@/constants/security";
 
-const MIN_MASTER_PASSWORD_LENGTH = 12;
 const MAX_STRENGTH_SCORE = 6;
 
 export function MasterPasswordScreen() {
@@ -96,7 +96,8 @@ export function MasterPasswordScreen() {
         <p className="text-xs text-muted-foreground">
           Nimm eine lange, einmalige Passphrase (mindestens {MIN_MASTER_PASSWORD_LENGTH}{" "}
           Zeichen), die du nirgends sonst verwendest. Alle Daten bleiben lokal auf deinem
-          Gerät – kein Server, keine Cloud.
+          Gerät – kein Server, keine Cloud. Ein vergessenes Masterpasswort kann nicht
+          zurückgesetzt werden; ohne es ist die Tresordatei nicht lesbar.
         </p>
       </div>
     </div>
