@@ -9,26 +9,30 @@ export interface PasswordEntry {
   updatedAt: number;
 }
 
-export type KdfName = "pbkdf2";
+export type KdfName = "argon2id";
 
-export interface KdfParams {
+export interface Argon2idParams {
+  memorySizeKiB: number;
   iterations: number;
-  hash: "SHA-256";
+  parallelism: number;
+  hashLength: number;
 }
 
+export const CURRENT_VAULT_VERSION = 3;
+
 /**
- * Version 1: ohne authentifizierte Metadaten (Altbestand, bleibt importierbar).
- * Version 2: Metadaten werden als "associated data" mit AES-GCM authentifiziert.
+ * Version 3: Argon2id-Ableitung, AES-256-GCM, Metadaten als "associated data"
+ * authentifiziert. Ältere Versionen werden nicht mehr unterstützt.
  */
 export interface EncryptedVault {
-  version: 1 | 2;
+  version: 3;
+  algorithm: "AES-256-GCM";
+  kdf: KdfName;
+  kdfParams: Argon2idParams;
   salt: string;
   iv: string;
   data: string;
   checksum: string;
-  algorithm?: "AES-256-GCM";
-  kdf?: KdfName;
-  kdfParams?: KdfParams;
 }
 
 export interface PlaintextVaultWithChecksum {
