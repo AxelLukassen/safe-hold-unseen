@@ -27,8 +27,9 @@ self.onmessage = async (event: MessageEvent<Argon2WorkerRequest>) => {
     });
 
     const response: Argon2WorkerResponse = { requestId, ok: true, key };
-    self.postMessage(response, [key.buffer]);
+    self.postMessage(response);
   } catch (error) {
+
     const response: Argon2WorkerResponse = {
       requestId,
       ok: false,
