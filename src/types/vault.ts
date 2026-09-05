@@ -18,21 +18,29 @@ export interface Argon2idParams {
   hashLength: number;
 }
 
-export const CURRENT_VAULT_VERSION = 3;
+export const CURRENT_VAULT_VERSION = 4;
 
 /**
- * Version 3: Argon2id-Ableitung, AES-256-GCM, Metadaten als "associated data"
- * authentifiziert. Ältere Versionen werden nicht mehr unterstützt.
+ * Äußeres Dateiformat: nur Salt, IV und der verschlüsselte Datenblob.
+ * Neutral gehaltene Feldnamen, damit die Struktur der Datei nichts verrät.
  */
-export interface EncryptedVault {
-  version: 3;
+export interface EncryptedVaultFile {
+  s: string;
+  i: string;
+  d: string;
+}
+
+/**
+ * Inneres Paket, das komplett verschlüsselt wird. Version, Verfahren,
+ * KDF-Parameter, Prüfsumme und Einträge sind ohne Masterpasswort nicht lesbar.
+ */
+export interface VaultPayload {
+  version: 4;
   algorithm: "AES-256-GCM";
   kdf: KdfName;
   kdfParams: Argon2idParams;
-  salt: string;
-  iv: string;
-  data: string;
   checksum: string;
+  entries: PasswordEntry[];
 }
 
 export interface PlaintextVaultWithChecksum {
