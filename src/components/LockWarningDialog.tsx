@@ -55,16 +55,16 @@ export function LockWarningDialog({
           </p>
         )}
 
-        <AlertDialogFooter className="gap-2">
-          <Button variant="ghost" onClick={onLockNow} disabled={isSaving}>
-            Ohne Speichern sperren
-          </Button>
-          <Button variant="outline" onClick={onStayUnlocked} disabled={isSaving}>
-            Weiterarbeiten
-          </Button>
-          <Button onClick={onSaveAndLock} disabled={isSaving}>
+        <AlertDialogFooter className="flex-col-reverse sm:flex-col gap-2">
+          <Button className="w-full" onClick={onSaveAndLock} disabled={isSaving}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Jetzt speichern und sperren
+          </Button>
+          <Button className="w-full" variant="outline" onClick={onStayUnlocked} disabled={isSaving}>
+            Weiterarbeiten
+          </Button>
+          <Button className="w-full" variant="ghost" onClick={onLockNow} disabled={isSaving}>
+            Ohne Speichern sperren
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
