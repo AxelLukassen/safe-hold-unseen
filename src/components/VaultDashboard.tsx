@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
 import { PasswordEntryCard } from "@/components/PasswordEntryCard";
 import { PasswordEntryForm } from "@/components/PasswordEntryForm";
-import { PasswordGenerator } from "@/components/PasswordGenerator";
 import { exportEncrypted, exportPlaintext, importFile } from "@/services/vaultFileService";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -24,7 +23,6 @@ export function VaultDashboard() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
-  const [showGenerator, setShowGenerator] = useState(false);
   const [showPlaintextWarning, setShowPlaintextWarning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
