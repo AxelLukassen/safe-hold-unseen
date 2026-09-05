@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -40,8 +40,8 @@ export function EntryTable({ entries, onEditEntry, onDeleteEntry }: Props) {
           {groups.map((group) => {
             const isCollapsed = collapsedGroups.includes(group.name);
             return (
-              <>
-                <TableRow key={`group-${group.name}`} className="bg-muted/50 hover:bg-muted/70">
+              <Fragment key={group.name}>
+                <TableRow className="bg-muted/50 hover:bg-muted/70">
                   <TableCell colSpan={TOTAL_COLUMN_COUNT} className="p-0">
                     <button
                       type="button"
@@ -70,7 +70,7 @@ export function EntryTable({ entries, onEditEntry, onDeleteEntry }: Props) {
                       onDelete={() => onDeleteEntry(entry.id)}
                     />
                   ))}
-              </>
+              </Fragment>
             );
           })}
         </TableBody>
