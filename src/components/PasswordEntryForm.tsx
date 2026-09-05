@@ -71,8 +71,8 @@ export function PasswordEntryForm({ entry, onSave, onClose }: Props) {
   const copyPassword = async () => {
     if (!form.password) return;
     await navigator.clipboard.writeText(form.password);
-    toast({ title: "Kopiert", description: "Passwort kopiert. Wird in 10 Sek. gelöscht." });
-    setTimeout(() => navigator.clipboard.writeText("").catch(() => {}), 10000);
+    toast({ title: "Kopiert", description: "Passwort kopiert. Wird in 1 Min. gelöscht." });
+    setTimeout(() => navigator.clipboard.writeText("").catch(() => {}), 60000);
   };
 
   const strengthColor =
