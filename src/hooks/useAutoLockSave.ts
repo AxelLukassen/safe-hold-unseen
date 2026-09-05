@@ -38,10 +38,10 @@ export function useAutoLockSave(): AutoLockSaveResult {
       toast({ title: "Gespeichert", description: "Neue verschlüsselte Datei heruntergeladen." });
       return true;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Speichern fehlgeschlagen.";
+      const message = toErrorMessage(error, "Speichern fehlgeschlagen.");
       setErrorMessage(message);
       toast({ title: "Fehler", description: message, variant: "destructive" });
+
       return false;
     } finally {
       setIsSaving(false);

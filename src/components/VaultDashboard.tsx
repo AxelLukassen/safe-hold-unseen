@@ -1,109 +1,41 @@
-import { useState, useRef } from "react";
-import {
-  Plus, Download, Upload, Lock, Search, FileDown, FileText, AlertTriangle, Loader2,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
 import { EntryTable } from "@/components/EntryTable";
+import { VaultToolbar } from "@/components/VaultToolbar";
 import { PasswordEntryForm } from "@/components/PasswordEntryForm";
 import { LockWarningDialog } from "@/components/LockWarningDialog";
+import { DeleteEntryDialog } from "@/components/DeleteEntryDialog";
+import { PlaintextExportDialog } from "@/components/PlaintextExportDialog";
 import { useAutoLockSave } from "@/hooks/useAutoLockSave";
-import { exportEncrypted, exportPlaintext, importFile } from "@/services/vaultFileService";
-import { toast } from "@/hooks/use-toast";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useVaultFileActions } from "@/hooks/useVaultFileActions";
 import { collectGroupNames } from "@/services/entryGrouping";
+import { filterEntries } from "@/services/entrySearch";
 import type { PasswordEntry } from "@/types/vault";
 
 export function VaultDashboard() {
-  const { state, lock, setEntries, addEntry, updateEntry, deleteEntry, markSaved, getMasterPassword } = useVault();
+  const { state, lock, addEntry, updateEntry, deleteEntry } = useVault();
   const autoLock = useAutoLockSave();
+  const fileActions = useVaultFileActions();
+
   const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<PasswordEntry | null>(null);
-  const [showPlaintextWarning, setShowPlaintextWarning] = useState(false);
-  const [isBusy, setIsBusy] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPlaintextWarningOpen, setIsPlaintextWarningOpen] = useState(false);
 
-  const filtered = state.entries.filter(
-    (e) =>
-      e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.username.toLowerCase().includes(search.toLowerCase()) ||
-      e.url.toLowerCase().includes(search.toLowerCase()) ||
-      e.group.toLowerCase().includes(search.toLowerCase())
+  const filteredEntries = useMemo(
+    () => filterEntries(state.entries, search),
+    [state.entries, search]
   );
+  const existingGroups = useMemo(() => collectGroupNames(state.entries), [state.entries]);
 
-  const existingGroups = collectGroupNames(state.entries);
-
-  const getErrorMessage = (error: unknown, fallback: string): string =>
-    error instanceof Error ? error.message : fallback;
-
-  const handleExportEncrypted = async () => {
-    const mp = getMasterPassword();
-    if (!mp) return;
-    setIsBusy(true);
-    try {
-      await exportEncrypted(state.entries, mp);
-      markSaved();
-      toast({ title: "Exportiert", description: "Verschlüsselte Datei heruntergeladen." });
-    } catch (error) {
-      toast({
-        title: "Fehler",
-        description: getErrorMessage(error, "Export fehlgeschlagen."),
-        variant: "destructive",
-      });
-    } finally {
-      setIsBusy(false);
-    }
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingEntry(null);
   };
-
-  const handleExportPlaintext = async () => {
-    setShowPlaintextWarning(false);
-    setIsBusy(true);
-    try {
-      await exportPlaintext(state.entries);
-      toast({ title: "Exportiert", description: "Klartext-Datei heruntergeladen." });
-    } catch (error) {
-      toast({
-        title: "Fehler",
-        description: getErrorMessage(error, "Export fehlgeschlagen."),
-        variant: "destructive",
-      });
-    } finally {
-      setIsBusy(false);
-    }
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const mp = getMasterPassword();
-    if (!mp) return;
-    setIsBusy(true);
-    try {
-      const entries = await importFile(file, mp);
-      setEntries(entries);
-      toast({ title: "Importiert", description: `${entries.length} Einträge geladen.` });
-    } catch (error) {
-      toast({
-        title: "Fehler",
-        description: getErrorMessage(error, "Import fehlgeschlagen. Ungültige Datei."),
-        variant: "destructive",
-      });
-    } finally {
-      setIsBusy(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
 
   const handleSaveEntry = (entry: PasswordEntry) => {
     if (editingEntry) {
@@ -111,8 +43,7 @@ export function VaultDashboard() {
     } else {
       addEntry(entry);
     }
-    setShowForm(false);
-    setEditingEntry(null);
+    closeForm();
   };
 
   const handleRequestDelete = (id: string) => {
@@ -124,6 +55,11 @@ export function VaultDashboard() {
     if (!deletingEntry) return;
     deleteEntry(deletingEntry.id);
     setDeletingEntry(null);
+  };
+
+  const handleConfirmPlaintextExport = () => {
+    setIsPlaintextWarningOpen(false);
+    void fileActions.exportPlaintextVault();
   };
 
   return (
@@ -138,61 +74,20 @@ export function VaultDashboard() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Suchen..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button size="sm" onClick={() => { setEditingEntry(null); setShowForm(true); }}>
-              <Plus className="h-4 w-4 mr-1" /> Neu
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={isBusy}
-              title="Importieren"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" variant="outline" disabled={isBusy} title="Exportieren">
-                  {isBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportEncrypted}>
-                  <FileDown className="h-4 w-4 mr-2" /> Verschlüsselt
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowPlaintextWarning(true)}>
-                  <FileText className="h-4 w-4 mr-2" /> Klartext
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          onChange={handleImport}
-          className="hidden"
+        <VaultToolbar
+          search={search}
+          isBusy={fileActions.isBusy}
+          onSearchChange={setSearch}
+          onCreateEntry={() => {
+            setEditingEntry(null);
+            setIsFormOpen(true);
+          }}
+          onImportFile={(file) => void fileActions.importVaultFile(file)}
+          onExportEncrypted={() => void fileActions.exportEncryptedVault()}
+          onExportPlaintext={() => setIsPlaintextWarningOpen(true)}
         />
 
-        {filtered.length === 0 ? (
+        {filteredEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Lock className="h-12 w-12 mb-4 opacity-30" />
             <p className="text-sm">
@@ -203,19 +98,22 @@ export function VaultDashboard() {
           </div>
         ) : (
           <EntryTable
-            entries={filtered}
-            onEditEntry={(entry) => { setEditingEntry(entry); setShowForm(true); }}
+            entries={filteredEntries}
+            onEditEntry={(entry) => {
+              setEditingEntry(entry);
+              setIsFormOpen(true);
+            }}
             onDeleteEntry={handleRequestDelete}
           />
         )}
       </main>
 
-      {showForm && (
+      {isFormOpen && (
         <PasswordEntryForm
           entry={editingEntry}
           existingGroups={existingGroups}
           onSave={handleSaveEntry}
-          onClose={() => { setShowForm(false); setEditingEntry(null); }}
+          onClose={closeForm}
         />
       )}
 
@@ -230,63 +128,17 @@ export function VaultDashboard() {
         onLockNow={autoLock.handleLockNow}
       />
 
-      <AlertDialog
-        open={deletingEntry !== null}
-        onOpenChange={(open) => { if (!open) setDeletingEntry(null); }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Eintrag löschen?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Der Eintrag{" "}
-              <span className="font-semibold text-foreground">
-                {deletingEntry?.title}
-              </span>{" "}
-              wird endgültig aus dem Tresor entfernt. Diese Aktion kann nicht
-              rückgängig gemacht werden – nur eine zuvor exportierte Datei kann
-              ihn wiederherstellen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Endgültig löschen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteEntryDialog
+        entryTitle={deletingEntry?.title ?? null}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeletingEntry(null)}
+      />
 
-      <AlertDialog open={showPlaintextWarning} onOpenChange={setShowPlaintextWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Klartext-Export
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Achtung: Diese Datei enthält alle Passwörter vollständig lesbar – ohne
-              Verschlüsselung und ohne Schutz durch dein Masterpasswort. Wer die Datei in
-              die Hände bekommt, hat sofort Zugriff auf alle Zugänge. Nutze sie nur kurzzeitig
-              (z. B. zum Wechsel zu einem anderen Programm), speichere sie nicht in Cloud-Ordnern
-              und lösche sie danach sicher. Für Backups ist der verschlüsselte Export die
-              richtige Wahl.
-            </AlertDialogDescription>
-
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExportPlaintext}>
-              Trotzdem exportieren
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <PlaintextExportDialog
+        isOpen={isPlaintextWarningOpen}
+        onOpenChange={setIsPlaintextWarningOpen}
+        onConfirm={handleConfirmPlaintextExport}
+      />
     </div>
   );
 }
