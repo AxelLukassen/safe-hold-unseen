@@ -5,12 +5,16 @@ interface VaultState {
   isUnlocked: boolean;
   entries: PasswordEntry[];
   masterPassword: string | null;
+  hasUnsavedChanges: boolean;
 }
 
 interface VaultContextValue {
   state: VaultState;
+  isLockWarningActive: boolean;
   unlock: (password: string) => void;
   lock: () => void;
+  extendSession: () => void;
+  markSaved: () => void;
   setEntries: (entries: PasswordEntry[]) => void;
   addEntry: (entry: PasswordEntry) => void;
   updateEntry: (entry: PasswordEntry) => void;
@@ -20,63 +24,114 @@ interface VaultContextValue {
 
 const VaultContext = createContext<VaultContextValue | null>(null);
 
-const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+export const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+export const WARNING_LEAD_TIME = 30 * 1000;
+
+const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "scroll", "touchstart"] as const;
+
+const createLockedState = (): VaultState => ({
+  isUnlocked: false,
+  entries: [],
+  masterPassword: null,
+  hasUnsavedChanges: false,
+});
 
 export function VaultProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<VaultState>({
-    isUnlocked: false,
-    entries: [],
-    masterPassword: null,
-  });
+  const [state, setState] = useState<VaultState>(createLockedState);
+  const [isLockWarningActive, setIsLockWarningActive] = useState(false);
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isWarningActiveRef = useRef(false);
 
-  const lock = useCallback(() => {
-    setState({ isUnlocked: false, entries: [], masterPassword: null });
+  useEffect(() => {
+    isWarningActiveRef.current = isLockWarningActive;
+  }, [isLockWarningActive]);
+
+  const clearWarningTimeout = useCallback(() => {
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
   }, []);
 
-  const resetTimer = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (state.isUnlocked) {
-      timeoutRef.current = setTimeout(lock, INACTIVITY_TIMEOUT);
-    }
-  }, [state.isUnlocked, lock]);
+  const lock = useCallback(() => {
+    clearWarningTimeout();
+    setIsLockWarningActive(false);
+    setState(createLockedState());
+  }, [clearWarningTimeout]);
+
+  const startWarningTimer = useCallback(() => {
+    clearWarningTimeout();
+    warningTimeoutRef.current = setTimeout(
+      () => setIsLockWarningActive(true),
+      INACTIVITY_TIMEOUT - WARNING_LEAD_TIME
+    );
+  }, [clearWarningTimeout]);
+
+  const handleActivity = useCallback(() => {
+    // Während die Vorwarnung sichtbar ist, darf Aktivität den Ablauf nicht
+    // zurücksetzen – sonst könnte der Dialog nie beantwortet werden.
+    if (isWarningActiveRef.current) return;
+    startWarningTimer();
+  }, [startWarningTimer]);
+
+  const extendSession = useCallback(() => {
+    setIsLockWarningActive(false);
+    startWarningTimer();
+  }, [startWarningTimer]);
+
+  const markSaved = useCallback(() => {
+    setState((prev) => ({ ...prev, hasUnsavedChanges: false }));
+  }, []);
 
   useEffect(() => {
     if (!state.isUnlocked) return;
 
-    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
-    events.forEach((e) => document.addEventListener(e, resetTimer));
-    resetTimer();
+    ACTIVITY_EVENTS.forEach((event) => document.addEventListener(event, handleActivity));
+    startWarningTimer();
 
     const handleVisibility = () => {
       if (document.hidden) lock();
     };
+    const handleBeforeUnload = () => lock();
+
     document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      events.forEach((e) => document.removeEventListener(e, resetTimer));
+      ACTIVITY_EVENTS.forEach((event) => document.removeEventListener(event, handleActivity));
       document.removeEventListener("visibilitychange", handleVisibility);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      clearWarningTimeout();
     };
-  }, [state.isUnlocked, resetTimer, lock]);
+  }, [state.isUnlocked, handleActivity, startWarningTimer, lock, clearWarningTimeout]);
 
   const unlock = useCallback((password: string) => {
-    setState({ isUnlocked: true, entries: [], masterPassword: password });
+    setState({
+      isUnlocked: true,
+      entries: [],
+      masterPassword: password,
+      hasUnsavedChanges: false,
+    });
   }, []);
 
   const setEntries = useCallback((entries: PasswordEntry[]) => {
-    setState((prev) => ({ ...prev, entries }));
+    setState((prev) => ({ ...prev, entries, hasUnsavedChanges: true }));
   }, []);
 
   const addEntry = useCallback((entry: PasswordEntry) => {
-    setState((prev) => ({ ...prev, entries: [...prev.entries, entry] }));
+    setState((prev) => ({
+      ...prev,
+      entries: [...prev.entries, entry],
+      hasUnsavedChanges: true,
+    }));
   }, []);
 
   const updateEntry = useCallback((entry: PasswordEntry) => {
     setState((prev) => ({
       ...prev,
       entries: prev.entries.map((e) => (e.id === entry.id ? entry : e)),
+      hasUnsavedChanges: true,
     }));
   }, []);
 
@@ -84,6 +139,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({
       ...prev,
       entries: prev.entries.filter((e) => e.id !== id),
+      hasUnsavedChanges: true,
     }));
   }, []);
 
@@ -91,7 +147,19 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <VaultContext.Provider
-      value={{ state, unlock, lock, setEntries, addEntry, updateEntry, deleteEntry, getMasterPassword }}
+      value={{
+        state,
+        isLockWarningActive,
+        unlock,
+        lock,
+        extendSession,
+        markSaved,
+        setEntries,
+        addEntry,
+        updateEntry,
+        deleteEntry,
+        getMasterPassword,
+      }}
     >
       {children}
     </VaultContext.Provider>

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useVault } from "@/context/VaultContext";
 import { PasswordEntryCard } from "@/components/PasswordEntryCard";
 import { PasswordEntryForm } from "@/components/PasswordEntryForm";
+import { LockWarningDialog } from "@/components/LockWarningDialog";
+import { useAutoLockSave } from "@/hooks/useAutoLockSave";
 import { exportEncrypted, exportPlaintext, importFile } from "@/services/vaultFileService";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -20,7 +22,8 @@ import {
 import type { PasswordEntry } from "@/types/vault";
 
 export function VaultDashboard() {
-  const { state, lock, setEntries, addEntry, updateEntry, getMasterPassword } = useVault();
+  const { state, lock, setEntries, addEntry, updateEntry, markSaved, getMasterPassword } = useVault();
+  const autoLock = useAutoLockSave();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
@@ -44,6 +47,7 @@ export function VaultDashboard() {
     setIsBusy(true);
     try {
       await exportEncrypted(state.entries, mp);
+      markSaved();
       toast({ title: "Exportiert", description: "Verschlüsselte Datei heruntergeladen." });
     } catch (error) {
       toast({
@@ -201,6 +205,17 @@ export function VaultDashboard() {
           onClose={() => { setShowForm(false); setEditingEntry(null); }}
         />
       )}
+
+      <LockWarningDialog
+        isOpen={autoLock.isWarningOpen}
+        secondsLeft={autoLock.secondsLeft}
+        isSaving={autoLock.isSaving}
+        errorMessage={autoLock.errorMessage}
+        hasUnsavedChanges={state.hasUnsavedChanges}
+        onSaveAndLock={() => void autoLock.handleSaveAndLock()}
+        onStayUnlocked={autoLock.handleStayUnlocked}
+        onLockNow={autoLock.handleLockNow}
+      />
 
       <AlertDialog open={showPlaintextWarning} onOpenChange={setShowPlaintextWarning}>
         <AlertDialogContent>

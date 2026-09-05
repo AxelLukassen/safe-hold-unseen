@@ -6,19 +6,30 @@ import { computeChecksum, verifyChecksum } from "./checksumService";
 const UNSUPPORTED_FORMAT_MESSAGE =
   "Diese Datei stammt aus einer älteren Version und wird nicht mehr unterstützt. Bitte den Tresor mit der aktuellen Version neu exportieren.";
 
+/**
+ * Zeitstempel im Dateinamen, damit frühere Stände nie überschrieben werden.
+ */
+export function buildVaultFilename(prefix: string): string {
+  const now = new Date();
+  const pad = (value: number): string => String(value).padStart(2, "0");
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${prefix}-${date}_${time}.json`;
+}
+
 export async function exportEncrypted(
   entries: PasswordEntry[],
   masterPassword: string
 ): Promise<void> {
   const vault = await encryptEntries(entries, masterPassword);
-  downloadJSON(vault, "securevault-encrypted.json");
+  downloadJSON(vault, buildVaultFilename("securevault-encrypted"));
 }
 
 export async function exportPlaintext(entries: PasswordEntry[]): Promise<void> {
   const entriesJson = JSON.stringify(entries);
   const checksum = await computeChecksum(entriesJson);
   const data = { version: 1 as const, format: "plaintext" as const, entries, checksum };
-  downloadJSON(data, "securevault-plaintext.json");
+  downloadJSON(data, buildVaultFilename("securevault-plaintext"));
 }
 
 function isEncryptedVaultFile(parsed: unknown): parsed is EncryptedVaultFile {
