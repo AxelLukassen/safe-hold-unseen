@@ -115,6 +115,17 @@ export function VaultDashboard() {
     setEditingEntry(null);
   };
 
+  const handleRequestDelete = (id: string) => {
+    const entry = state.entries.find((item) => item.id === id);
+    if (entry) setDeletingEntry(entry);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deletingEntry) return;
+    deleteEntry(deletingEntry.id);
+    setDeletingEntry(null);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur">
