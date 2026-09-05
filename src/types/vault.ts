@@ -5,9 +5,12 @@ export interface PasswordEntry {
   password: string;
   url: string;
   notes: string;
+  group: string;
   createdAt: number;
   updatedAt: number;
 }
+
+export const UNGROUPED_LABEL = "Ohne Gruppe";
 
 export const ENTRY_FIELD_LIMITS = {
   title: 255,
@@ -15,7 +18,9 @@ export const ENTRY_FIELD_LIMITS = {
   password: 255,
   url: 255,
   notes: 5000,
+  group: 100,
 } as const;
+
 
 export type KdfName = "argon2id";
 
