@@ -9,6 +9,14 @@ export interface PasswordEntry {
   updatedAt: number;
 }
 
+export const ENTRY_FIELD_LIMITS = {
+  title: 255,
+  username: 255,
+  password: 255,
+  url: 255,
+  notes: 5000,
+} as const;
+
 export type KdfName = "argon2id";
 
 export interface Argon2idParams {
