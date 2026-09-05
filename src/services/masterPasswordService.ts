@@ -1,4 +1,4 @@
-import type { PasswordEntry } from "@/types/vault";
+import type { EncryptedVaultFile, PasswordEntry } from "@/types/vault";
 
 import { encryptEntries, decryptVault } from "./cryptoService";
 
@@ -14,7 +14,7 @@ export async function changeMasterPassword(
   entries: PasswordEntry[],
   currentPassword: string,
   newPassword: string
-): Promise<unknown> {
+): Promise<EncryptedVaultFile> {
   const probe = await encryptEntries(entries, currentPassword);
   try {
     await decryptVault(probe, currentPassword);
