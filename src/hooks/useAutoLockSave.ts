@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useVault, WARNING_LEAD_TIME } from "@/context/VaultContext";
 import { exportEncrypted } from "@/services/vaultFileService";
+import { toErrorMessage } from "@/lib/errors";
 import { toast } from "@/hooks/use-toast";
+
 
 const COUNTDOWN_SECONDS = Math.round(WARNING_LEAD_TIME / 1000);
 const TICK_INTERVAL_MS = 1000;
