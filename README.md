@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# SecureVault
 
-## Project info
+Ein minimalistischer, vollständig clientseitiger Passwort-Manager. Alle Daten
+bleiben auf deinem Gerät – es gibt keinen Server, keine Datenbank, keine Cloud.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Sicherheitsmodell
 
-## How can I edit this code?
+- **Zero-Knowledge**: Das Masterpasswort lebt nur im Arbeitsspeicher des Browsers.
+  Es wird nirgends gespeichert und nirgends hin übertragen.
+- **Verschlüsselung**: AES-256-GCM (128-Bit-Authentifizierungstag) mit einem
+  Schlüssel, der per Argon2id (64 MiB, 3 Durchläufe, individuelles 16-Byte-Salt)
+  abgeleitet wird. Jede Verschlüsselung verwendet eine frische IV.
+- **Dateibasiert**: Der Tresor ist eine verschlüsselte JSON-Datei, die du selbst
+  herunterlädst und wieder hochlädst. Optional gibt es einen Klartext-Export
+  (mit ausdrücklicher Warnung).
+- **Automatisches Sperren**: Nach 5 Minuten Inaktivität, beim Schließen des Tabs
+  oder beim Verlassen der Seite werden alle sensiblen Daten aus dem Speicher
+  entfernt. Ungespeicherte Änderungen können vorher automatisch als neue Datei
+  gesichert werden (alte Dateien werden nie überschrieben).
+- **Kein Zurücksetzen**: Ein vergessenes Masterpasswort kann nicht
+  wiederhergestellt werden.
 
-There are several ways of editing your application.
+## Build-Integrität prüfen
 
-**Use Lovable**
+Der Build erzeugt zwei zusätzliche Dateien in `dist/`:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- `SHA256SUMS` – SHA-256-Hash jeder ausgelieferten Datei
+- `build-id.json` – die Build-ID (SHA-256 über die SHA256SUMS) mit Zeitstempel
 
-Changes made via Lovable will be committed automatically to this repo.
+Die App zeigt die Build-ID im Info-Bereich „Sicherheit & Funktionsweise" an.
 
-**Use your preferred IDE**
+So prüfst du, ob die gehostete Version unverändert aus diesem Quellcode stammt:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Repo klonen und lokal bauen:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+   ```sh
+   npm install
+   npm run build
+   ```
 
-Follow these steps:
+2. Die Hashes der gehosteten Dateien mit `dist/SHA256SUMS` vergleichen, z. B.:
+
+   ```sh
+   curl -s https://DEINE-DOMAIN/assets/index-XXXX.js | sha256sum
+   ```
+
+   Der Hash muss mit dem Eintrag in `SHA256SUMS` übereinstimmen.
+
+> Hinweis: Hashes können zwischen verschiedenen Build-Umgebungen abweichen
+> (z. B. durch unterschiedliche Toolchain-Versionen). Der Vergleich ist daher
+> am aussagekräftigsten, wenn du denselben Stand in derselben Umgebung baust.
+
+## Technologien
+
+- Vite, TypeScript, React, Tailwind CSS, shadcn-ui
+- [hash-wasm](https://github.com/Daninet/hash-wasm) für Argon2id (WebAssembly)
+- Web Crypto API für AES-256-GCM
+
+## Entwicklung
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Lizenz
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+[MIT](LICENSE)
