@@ -1,24 +1,68 @@
-# Secure Vault Keeper
+# SecureVault
 
-ich benötige eine app zum sicheren speichern von passworten. Aber die passworte sollen nicht in einer datenbank gespeichert werden, sondern als uoload oder download auf meinem rechner. nach einem download oder nach eingabe eines passwortes soll der interne speicher gecleart werden, damit es keine leaks geben kann. die passworte sollen als hash gespeichert werden, aber es gibt einen modus mit dem ich die passworte im klartext downloaden oder uploaden kann. die app hat ein passwort, das als hash gespeichert ist und dieses masterpasswort kenne nur ich im klartext, das wird nirgends gespeichert und auch nbei der verarbeitung sofort wieder gelöscht. die app soll ein minimalistische interface haben und responsive sein.
+Ein minimalistischer, vollständig clientseitiger Passwort-Manager. Alle Daten
+bleiben auf deinem Gerät – es gibt keinen Server, keine Datenbank, keine Cloud.
 
-This project was built with [Lovable](https://lovable.dev).
+## Sicherheitsmodell
 
-## Build with Lovable
+- **Zero-Knowledge**: Das Masterpasswort lebt nur im Arbeitsspeicher des Browsers.
+  Es wird nirgends gespeichert und nirgends hin übertragen.
+- **Verschlüsselung**: AES-256-GCM (128-Bit-Authentifizierungstag) mit einem
+  Schlüssel, der per Argon2id (64 MiB, 3 Durchläufe, individuelles 16-Byte-Salt)
+  abgeleitet wird. Jede Verschlüsselung verwendet eine frische IV.
+- **Dateibasiert**: Der Tresor ist eine verschlüsselte JSON-Datei, die du selbst
+  herunterlädst und wieder hochlädst. Optional gibt es einen Klartext-Export
+  (mit ausdrücklicher Warnung).
+- **Automatisches Sperren**: Nach 5 Minuten Inaktivität, beim Schließen des Tabs
+  oder beim Verlassen der Seite werden alle sensiblen Daten aus dem Speicher
+  entfernt. Ungespeicherte Änderungen können vorher automatisch als neue Datei
+  gesichert werden (alte Dateien werden nie überschrieben).
+- **Kein Zurücksetzen**: Ein vergessenes Masterpasswort kann nicht
+  wiederhergestellt werden.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/64c36517-9bcb-47ce-9258-36e999287ed6).
+## Build-Integrität prüfen
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+Der Build erzeugt zwei zusätzliche Dateien in `dist/`:
 
-## Development
+- `SHA256SUMS` – SHA-256-Hash jeder ausgelieferten Datei
+- `build-id.json` – die Build-ID (SHA-256 über die SHA256SUMS) mit Zeitstempel
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Die App zeigt die Build-ID im Info-Bereich „Sicherheit & Funktionsweise" an.
+
+So prüfst du, ob die gehostete Version unverändert aus diesem Quellcode stammt:
+
+1. Repo klonen und lokal bauen:
+
+   ```sh
+   npm install
+   npm run build
+   ```
+
+2. Die Hashes der gehosteten Dateien mit `dist/SHA256SUMS` vergleichen, z. B.:
+
+   ```sh
+   curl -s https://DEINE-DOMAIN/assets/index-XXXX.js | sha256sum
+   ```
+
+   Der Hash muss mit dem Eintrag in `SHA256SUMS` übereinstimmen.
+
+> Hinweis: Hashes können zwischen verschiedenen Build-Umgebungen abweichen
+> (z. B. durch unterschiedliche Toolchain-Versionen). Der Vergleich ist daher
+> am aussagekräftigsten, wenn du denselben Stand in derselben Umgebung baust.
+
+## Technologien
+
+- Vite, TypeScript, React, Tailwind CSS, shadcn-ui
+- [hash-wasm](https://github.com/Daninet/hash-wasm) für Argon2id (WebAssembly)
+- Web Crypto API für AES-256-GCM
+
+## Entwicklung
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
+
+## Lizenz
+
+[MIT](LICENSE)

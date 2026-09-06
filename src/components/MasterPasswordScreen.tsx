@@ -20,6 +20,7 @@ import {
 import { useVault } from "@/context/VaultContext";
 import { evaluateStrength } from "@/services/passwordGenerator";
 import { MIN_MASTER_PASSWORD_LENGTH } from "@/constants/security";
+import { BuildIntegrityInfo } from "@/components/BuildIntegrityInfo";
 
 const MAX_STRENGTH_SCORE = 6;
 
@@ -170,6 +171,7 @@ export function MasterPasswordScreen() {
                 die Dateien auf dem Server verändern kann, könnte theoretisch die
                 App manipulieren.
               </InfoItem>
+              <BuildIntegrityInfo />
             </ul>
           </CollapsibleContent>
         </Collapsible>
