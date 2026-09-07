@@ -134,7 +134,7 @@ export function MasterPasswordScreen() {
               type="button"
               className="flex w-full items-center justify-center gap-2 text-sm font-medium text-primary hover:underline"
             >
-              Sicherheit & Funktionsweise
+              Sicherheit & Funktionsweise (hier klicken)
               <ChevronDown
                 className={`h-4 w-4 transition-transform duration-200 ${
                   infoOpen ? "rotate-180" : ""
