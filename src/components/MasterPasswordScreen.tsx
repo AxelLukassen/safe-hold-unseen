@@ -177,9 +177,15 @@ export function MasterPasswordScreen() {
         </Collapsible>
 
         <p className="text-xs text-muted-foreground">
-          Nimm eine lange, einmalige Passphrase (mindestens {MIN_MASTER_PASSWORD_LENGTH}{" "}
-          Zeichen), die du nirgends sonst verwendest. Ein vergessenes Masterpasswort
-          kann nicht zurückgesetzt werden; ohne es ist die Tresordatei nicht lesbar.
+          Nimm ein langes, einmaliges Masterpasswort (mindestens {MIN_MASTER_PASSWORD_LENGTH}{" "}
+          Zeichen), das du nirgends sonst verwendest.{"\u00a0"}
+          <br />
+          <br />
+          Mit deinem Masterpasswort wird dein Tresor verschlüsselt.{"\u00a0"}
+          <br />
+          <br />
+          Ein vergessenes Masterpasswort kann nicht zurückgesetzt werden; ohne es ist die
+          Tresordatei nicht lesbar.
         </p>
       </div>
     </div>
