@@ -189,7 +189,7 @@ export function MasterPasswordScreen() {
           <br />
           <br />
           <br />
-          Du köntest deinen Tresor zur Sicherheit im Klartext speichern. Dann kannst du ihn
+          Du könntest deinen Tresor zur Sicherheit im Klartext speichern. Dann kannst du ihn
           wieder importieren, falls du dein Masterpasswort vergessen hast. Aber dann musst du
           sicherstellen, dass dein Klartext-Tresor irgendwo gespeichert oder vielleicht
           ausgedruckt ist, wo niemand außer dir Zugriff hat.
