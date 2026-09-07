@@ -199,6 +199,8 @@ export function MasterPasswordScreen() {
           Kurz und gut:{"\u00a0"}
           <br />
           am sichersten ist es wenn du dein Masterpasswort einfach nicht vergisst!{"\u00a0"}
+          <br />
+          <br />
         </p>
       </div>
     </div>
