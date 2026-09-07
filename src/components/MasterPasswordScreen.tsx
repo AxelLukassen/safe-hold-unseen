@@ -21,6 +21,7 @@ import { useVault } from "@/context/VaultContext";
 import { evaluateStrength } from "@/services/passwordGenerator";
 import { MIN_MASTER_PASSWORD_LENGTH } from "@/constants/security";
 import { BuildIntegrityInfo } from "@/components/BuildIntegrityInfo";
+import secureVaultIcon from "@/assets/securevault-icon.png";
 
 const MAX_STRENGTH_SCORE = 6;
 
@@ -71,9 +72,11 @@ export function MasterPasswordScreen() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6 text-center">
         <div className="space-y-3">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <Shield className="h-8 w-8 text-primary" />
-          </div>
+          <img
+            src={secureVaultIcon}
+            alt="SecureVault"
+            className="mx-auto h-16 w-16 object-contain"
+          />
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             SecureVault
           </h1>
