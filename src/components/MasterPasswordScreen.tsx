@@ -177,6 +177,10 @@ export function MasterPasswordScreen() {
         </Collapsible>
 
         <p className="text-xs text-muted-foreground">
+          SecureVault ist ein minimalistischer, vollständig clientseitiger Passwort-Manager.{"\u00a0"}
+          <br />
+          <br />
+          <br />
           Nimm ein langes, einmaliges Masterpasswort (mindestens {MIN_MASTER_PASSWORD_LENGTH}{" "}
           Zeichen), das du nirgends sonst verwendest.{"\u00a0"}
           <br />
